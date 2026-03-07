@@ -33,10 +33,10 @@ onMounted(loadData);
 <template>
   <main class="page">
     <header class="hero">
-      <div>
-        <h1>HomeHub Dashboard</h1>
-        <p>家庭服务、导航与概览</p>
+      <div class="brand-bar">
+        <img class="brand-logo" src="/logo.svg" alt="HomeHub logo" />
       </div>
+      <p class="hero-subtitle">家庭服务、导航与概览</p>
       <div class="badges">
         <span class="badge">服务 {{ totalServices }}</span>
         <span class="badge" v-if="source === 'api'">在线数据</span>

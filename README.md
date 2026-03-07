@@ -61,15 +61,15 @@ docker run --rm homehub-frontend ls -la /dist
 npm run build
 ```
 
-2. 同步静态文件到 nginx 挂载目录（示例）
+2. 同步静态文件到你的静态站点目录（示例）
 
 ```bash
-cp -R dist/. /Volumes/docker-data/nginx/html/homehub/
+cp -R dist/. <static_root_dir>/
 ```
 
 3. nginx 站点建议
 
-- 前端静态根目录指向 `.../html/homehub`
+- 前端静态根目录指向 `<static_root_dir>`
 - `location /` 使用 SPA 回退：`try_files $uri $uri/ /index.html;`
 - `location /api/` 反代到 HomeHub 后端
 

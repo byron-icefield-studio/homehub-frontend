@@ -1,6 +1,6 @@
 # HomeHub Frontend
 
-GitHub: https://github.com/byron-icefield-studio/HomeHub-frontend
+GitHub: https://github.com/byron-icefield-studio/homehub-frontend
 
 HomeHub 前端项目（Vue 3 + Vite + TypeScript），负责：
 

@@ -8,12 +8,14 @@ import {
   fetchContainerStats,
   fetchDashboardConfig,
   fetchIconSuggestions,
+  fetchIconToLocal,
   fetchServicesConfig,
   fetchSystemStats,
   getCachedServicesConfig,
   getLegacyDockerUrls,
   saveDashboardConfig,
   saveServicesConfig,
+  uploadIcon,
   type ContainerInfo,
   type ContainerStats,
   type DashboardConfig,
@@ -75,7 +77,12 @@ const editor = reactive({
   icon: "",
   iconSuggestions: [] as string[],
   loadingIcons: false,
+  uploadingIcon: false,  // 图标上传中状态 / Icon uploading state
 });
+// 隐藏的文件选择 input 引用 / Hidden file input reference
+const iconFileInput = ref<HTMLInputElement | null>(null);
+// 记录当前选中的候选图标远程 URL（用于高亮显示）/ Track selected suggestion remote URL for highlight
+const selectedSuggestionUrl = ref("");
 let refreshTimer: number | null = null;
 let flashTimer: number | null = null;
 const networkMode = ref<NetworkMode>("internal");
@@ -374,6 +381,8 @@ function closeEditor() {
   editor.icon = "";
   editor.iconSuggestions = [];
   editor.loadingIcons = false;
+  editor.uploadingIcon = false;
+  selectedSuggestionUrl.value = "";
 }
 
 async function loadIconOptions() {
@@ -386,6 +395,50 @@ async function loadIconOptions() {
     editor.iconSuggestions = [];
   } finally {
     editor.loadingIcons = false;
+  }
+}
+
+/**
+ * 点选图标候选时，将远程图标下载到服务器本地
+ * When an icon suggestion is clicked, download the remote icon to server local storage
+ */
+async function selectIconSuggestion(remoteUrl: string) {
+  selectedSuggestionUrl.value = remoteUrl;
+  editor.uploadingIcon = true;
+  try {
+    editor.icon = await fetchIconToLocal(remoteUrl);
+  } catch {
+    // 下载失败时退回使用远程 URL / Fall back to remote URL on download failure
+    editor.icon = remoteUrl;
+    showFlash("图标缓存失败，使用远程地址", "error");
+  } finally {
+    editor.uploadingIcon = false;
+  }
+}
+
+/**
+ * 触发文件选择对话框 / Trigger file selection dialog
+ */
+function triggerIconUpload() {
+  iconFileInput.value?.click();
+}
+
+/**
+ * 处理本地图标文件上传 / Handle local icon file upload
+ */
+async function handleIconFileChange(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+  editor.uploadingIcon = true;
+  try {
+    editor.icon = await uploadIcon(file);
+  } catch {
+    showFlash("图标上传失败", "error");
+  } finally {
+    editor.uploadingIcon = false;
+    // 重置 input 以支持重复选择同一文件 / Reset input to allow re-selecting the same file
+    input.value = "";
   }
 }
 
@@ -755,12 +808,23 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="icon-tools">
-          <button class="submit-button secondary" type="button" @click="loadIconOptions" :disabled="editor.loadingIcons">
+          <button class="submit-button secondary" type="button" @click="loadIconOptions" :disabled="editor.loadingIcons || editor.uploadingIcon">
             {{ editor.loadingIcons ? '拉取中...' : '拉取网页图标' }}
           </button>
+          <button class="submit-button secondary" type="button" @click="triggerIconUpload" :disabled="editor.loadingIcons || editor.uploadingIcon">
+            {{ editor.uploadingIcon ? '上传中...' : '上传本地图标' }}
+          </button>
+          <!-- 隐藏的文件选择 input / Hidden file input -->
+          <input
+            ref="iconFileInput"
+            type="file"
+            accept="image/*"
+            style="display: none"
+            @change="handleIconFileChange"
+          />
           <div v-if="editor.icon" class="icon-current">
             <img :src="editor.icon" alt="" />
-            <span>已选图标</span>
+            <button class="icon-clear-btn" type="button" @click="editor.icon = ''" title="清除图标">✕</button>
           </div>
         </div>
 
@@ -769,9 +833,10 @@ onBeforeUnmount(() => {
             v-for="icon in editor.iconSuggestions"
             :key="icon"
             class="icon-choice"
-            :class="{ active: editor.icon === icon }"
+            :class="{ active: selectedSuggestionUrl === icon }"
             type="button"
-            @click="editor.icon = icon"
+            :disabled="editor.uploadingIcon"
+            @click="selectIconSuggestion(icon)"
           >
             <img :src="icon" alt="" />
           </button>

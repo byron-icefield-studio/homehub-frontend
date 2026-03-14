@@ -158,6 +158,34 @@ export async function fetchIconSuggestions(url: string): Promise<string[]> {
   return data.icons || [];
 }
 
+/**
+ * 下载远程图标到服务器本地存储，返回本地访问路径
+ * Download a remote icon to server local storage, return local access path
+ */
+export async function fetchIconToLocal(url: string): Promise<string> {
+  const res = await fetch("/api/icons/fetch", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url }),
+  });
+  if (!res.ok) throw new Error(`icon fetch failed: ${res.status}`);
+  const data = (await res.json()) as { path: string };
+  return data.path;
+}
+
+/**
+ * 上传本地图标文件到服务器，返回本地访问路径
+ * Upload a local icon file to server, return local access path
+ */
+export async function uploadIcon(file: File): Promise<string> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch("/api/icons/upload", { method: "POST", body: form });
+  if (!res.ok) throw new Error(`icon upload failed: ${res.status}`);
+  const data = (await res.json()) as { path: string };
+  return data.path;
+}
+
 export function getLegacyDockerUrls(): Record<string, string> {
   const raw = localStorage.getItem(DOCKER_URLS_KEY);
   if (!raw) return {};

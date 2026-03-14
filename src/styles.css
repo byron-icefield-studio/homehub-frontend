@@ -636,7 +636,8 @@ body {
 .icon-tools {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
   margin: 14px 0;
 }
 
@@ -646,6 +647,23 @@ body {
   gap: 8px;
   color: var(--muted);
   font-size: 12px;
+}
+
+/* 图标清除按钮 / Icon clear button */
+.icon-clear-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.icon-clear-btn:hover {
+  color: var(--fg);
+  background: var(--line);
 }
 
 .icon-current img,

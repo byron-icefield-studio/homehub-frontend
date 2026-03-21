@@ -556,6 +556,10 @@ onMounted(async () => {
   if (savedMode === "internal" || savedMode === "external") {
     networkMode.value = savedMode;
   }
+  // 移动端默认折叠服务器数据模块 / Collapse system section by default on mobile
+  if (window.innerWidth < 768) {
+    collapsed.system = true;
+  }
   await refreshAll();
   refreshTimer = window.setInterval(() => {
     void fetchSystemStats().then((data) => (system.value = data));
